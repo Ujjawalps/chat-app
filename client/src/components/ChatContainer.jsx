@@ -1,7 +1,17 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import assets, { messagesDummyData } from '../assets/assets'
+import { useEffect } from 'react';
 
 const ChatContainer = ({selectedUser, setselectedUser}) => {
+
+    const scrollEnd = useRef();
+    useEffect(() => {
+        if (scrollEnd.current) {
+            scrollEnd.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, []);
+
+
   return selectedUser ?(
     <div className='h-full overflow-scroll relative backdrop-blur-lg'>
         {/* Header */}
@@ -15,19 +25,23 @@ const ChatContainer = ({selectedUser, setselectedUser}) => {
           <img src={assets.help_icon} alt="help" className='max-md:hidden max-w-5' />
         </div>
         {/* Chat Area */}
-        <div className='flex flex-col gap-3 p-4 pb-6h-[calc(100%-120px)] overflow-y-scroll'>
+        <div className='flex flex-col p-4 pb-6 h-[calc(100%-120px)] overflow-y-scroll'>
           {messagesDummyData.map((msg, index) =>(
             <div key={index} className={`flex items-end gap-2 justify-end ${msg.senderId !== '680f50e4f10f3cd28382ecf9' && 'flex-row-reverse'}`}>
                 {msg.image ?(
                     <img src={msg.image} alt="Image" className='max-w-[230px] border border-gray-700 rounded-lg overflow-hidden mb-8' />
                 ):(
-                    <p className={`text-sm p-2 rounded-lg ${msg.senderId === '680f50e4f10f3cd28382ecf9' ? 'bg-violet-500/20 text-white' : 'bg-gray-200 text-gray-800'}`}>
+                    <p className={`p-2 max-w-[200px] md:text-sm font-light rounded-lg mb-8 break-all bg-violet-500/30 text-white ${msg.senderId === '680f50e4f10f3cd28382ecf9' ? 'rounded-br-none' : 'rounded-bl-none'}`}>
                         {msg.text}
                     </p>
                 )}
-
+                <div className='text-center text-xs'>
+                    <img src={msg.senderId === '680f50e4f10f3cd28382ecf9' ? assets.avatar_icon : assets.profile_martin} alt="" className='w-7 rounded-full'/>
+                    <p className='text-gray-500'>{msg.createdAt}</p>
+                </div>
             </div>
           ))}
+          <div ref={scrollEnd}></div>
         </div>
     </div>
   ) : (
