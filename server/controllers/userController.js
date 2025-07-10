@@ -36,3 +36,42 @@ export const signup = async (req, res) => {
 }
 
 //login user
+
+export const login = async (req, res) => {
+
+    try {
+        const { email, password } = req.body;
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ success: false, message: "Invalid credentials" });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ success: false, message: "Invalid credentials" });
+        }
+
+        const token = generateToken(user._id);
+        res.json({ success: true, userData: user, token, message: "Login successful" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+        
+    }
+}
+
+// controller to check if user is authenticated
+export const isAuthenticated = async (req, res) => {
+    try {
+        const user = req.user;
+        if (!user) {
+            return res.status(401).json({ success: false, message: "Unauthorized" });
+        }
+        res.json({ success: true, userData: user });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+}
