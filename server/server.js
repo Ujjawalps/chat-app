@@ -1,9 +1,11 @@
 import express from 'express';
 import cors from 'cors';
-import mongoose from 'mongoose';
 import "dotenv/config";
 import http from "http";
 import { connectDB } from './lib/db.js';
+import UserRouter from './routes/userRouter.js';
+
+
 
 //create express app
 const app = express();
@@ -13,9 +15,11 @@ const server = http.createServer(app);
 app.use(cors());
 app.use(express.json({ limit: '4mb' }));
 
+//routes setup
 app.use("/api/status", (req, res) => {
   res.send("Server is running");
 });
+app.use("/api/auth", UserRouter);
 
 //connect to mongodb
 await connectDB();
