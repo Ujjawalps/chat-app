@@ -9,6 +9,9 @@ function LoginPage() {
   const [password, setPassword] = useState('')
   const [isDataSubmitted, setIsDataSubmitted] = useState(false)
 
+
+  
+
   const onSubmitHandler = (e) => {
     e.preventDefault()
 
