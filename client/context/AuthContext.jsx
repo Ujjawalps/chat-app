@@ -16,39 +16,43 @@ export const AuthProvider = ({ children }) => {
     const [socket, setSocket] = useState(null);
 
     //check if the user is authenticated
-    const checkAuth = async() => {
+    const checkAuth = async () => {
+        if (!token) {
+            setAuthUser(null); // Clear auth state if no token
+            return;
+        }
         try {
-            const {data} = await axios.get('/api/auth/check');
-            if(data.success) {
+            const { data } = await axios.get('/api/auth/check');
+            if (data.success) {
                 setAuthUser(data.user);
                 connectSocket(data.user);
-                
             }
-
         } catch (error) {
-            toast.error(error.message);   
+            setAuthUser(null); // Clear auth state on error
+            localStorage.removeItem('token'); // Remove invalid token
+            toast.error('Please log in again');
         }
-    }
+    };
 
 
     //login function to handle user authentication and socket connection
     const login = async (state, credentials) => {
         try {
-            const {data} = await axios.post(`/api/auth/${state}`, credentials);
-            if(data.success){
+            const { data } = await axios.post(`/api/auth/${state}`, credentials);
+            if (data.success) {
                 setAuthUser(data.userData);
                 connectSocket(data.userData);
                 axios.defaults.headers.common['token'] = data.token;
                 setToken(data.token);
                 localStorage.setItem('token', data.token);
                 toast.success(data.message);
-            }else{
+            } else {
                 toast.error(data.message);
             }
         } catch (error) {
             toast.error(error.message);
         }
-    }
+    };
 
     //logout function to handle user logout and socket disconnection
     const logout =  async () => {
@@ -107,13 +111,15 @@ export const AuthProvider = ({ children }) => {
 
         setSocket(newSocket);
     }
-    useEffect(() =>{
-        if(token) {
-            //set the axios default header
-            axios.defaults.headers.common['token'] = token;
-        }
-        checkAuth();;
-    }, [token])
+    useEffect(() => {
+    if (token) {
+        axios.defaults.headers.common['token'] = token;
+        checkAuth();
+    } else {
+        setAuthUser(null); // Clear auth state if no token
+    }
+}, [token]);
+
     const value ={
         axios,
         token,

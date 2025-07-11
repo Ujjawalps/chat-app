@@ -1,16 +1,36 @@
+// import mongoose from "mongoose";
+
+// export const connectDB = async () => {
+//     try {
+//         mongoose.connection.on("connected", () => {
+//             console.log("MongoDB connected successfully");
+//         });
+//         mongoose.connection.on("error", (err) => {
+//             console.error("MongoDB connection error:", err);
+//         });
+//         await mongoose.connect(`${process.env.MONGODB_URL}/chat-app`, {
+//             useNewUrlParser: true,
+//             useUnifiedTopology: true,
+//         });
+//     } catch (error) {
+//         console.error("Database connection failed:", error);
+//         process.exit(1);
+//     }
+// };
+
 import mongoose from "mongoose";
 
-// function to connect the database
 export const connectDB = async () => {
-    try{
-
-        // to just check that mongo is connected or not?
+    try {
         mongoose.connection.on("connected", () => {
             console.log("MongoDB connected successfully");
         });
-        await mongoose.connect(`${process.env.MONGODB_URL}/chat-app`)
-    }catch(error){
+        mongoose.connection.on("error", (err) => {
+            console.error("MongoDB connection error:", err);
+        });
+        await mongoose.connect(`${process.env.MONGODB_URL}/chat-app`);
+    } catch (error) {
         console.error("Database connection failed:", error);
         process.exit(1);
     }
-}
+};
