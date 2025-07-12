@@ -24,8 +24,8 @@ export const AuthProvider = ({ children }) => {
         try {
             const { data } = await axios.get('/api/auth/check');
             if (data.success) {
-                setAuthUser(data.user);
-                connectSocket(data.user);
+                setAuthUser(data.userData);
+                connectSocket(data.userData);
             }
         } catch (error) {
             setAuthUser(null); // Clear auth state on error
