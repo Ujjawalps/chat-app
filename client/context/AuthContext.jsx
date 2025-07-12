@@ -38,6 +38,7 @@ export const AuthProvider = ({ children }) => {
     //login function to handle user authentication and socket connection
     const login = async (state, credentials) => {
         try {
+            console.log(`Sending ${state} request with payload:`, credentials);
             const { data } = await axios.post(`/api/auth/${state}`, credentials);
             if (data.success) {
                 setAuthUser(data.userData);
@@ -50,7 +51,9 @@ export const AuthProvider = ({ children }) => {
                 toast.error(data.message);
             }
         } catch (error) {
-            toast.error(error.message);
+            const message = error.response?.data?.message || `Failed to ${state}`;
+            console.error(`${state} error:`, error.response?.data || error.message);
+            toast.error(message);
         }
     };
 
@@ -94,12 +97,8 @@ export const AuthProvider = ({ children }) => {
         setSocket(newSocket);
 
         newSocket.on("getOnlineUsers", (users) => {
-            setOnlineUsers(userIds);
+            setOnlineUsers(users);
         })
-
-        newSocket.on('connect', () => {
-            console.log('Connected to socket server');
-        });
 
         newSocket.on('disconnect', () => {
             console.log('Disconnected from socket server');
@@ -109,7 +108,6 @@ export const AuthProvider = ({ children }) => {
             setOnlineUsers(users);
         });
 
-        setSocket(newSocket);
     }
     useEffect(() => {
     if (token) {
