@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react'
 import assets from '../assets/assets'
 import { AuthContext } from '../../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 
 function LoginPage() {
   const [currState, setCurrentState] = useState('sign up')
@@ -10,23 +11,31 @@ function LoginPage() {
   const [password, setPassword] = useState('')
   const [isDataSubmitted, setIsDataSubmitted] = useState(false)
 
+  const navigate = useNavigate();
 
-  const {login} = useContext(AuthContext);
+  const {login, authUser} = useContext(AuthContext);
 
-  const onSubmitHandler = (e) => {
-    e.preventDefault()
 
-    if(currState === 'sign up' && !isDataSubmitted) {
-      setIsDataSubmitted(true)
+  const onSubmitHandler = async (e) => {
+    e.preventDefault();
+
+    if (currState === 'sign up' && !isDataSubmitted) {
+      setIsDataSubmitted(true);
       return;
     }
-    login(currState === 'sign up' ? 'signup' : 'login', {
+
+    const success = await login(currState === 'sign up' ? 'signup' : 'login', {
       fullName,
       email,
       password,
       bio
     });
-  }
+
+    if (success) {
+      navigate('/'); // ✅ clean redirect
+    }
+  };
+
   return (
     <div className='min-h-screen bg-cover bg-center flex items-center justify-center gap-8 sm:justify-evenly max-sm:flex-col backdrop-blur-2xl'>
       {/* left side */}
