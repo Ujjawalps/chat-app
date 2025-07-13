@@ -1,18 +1,31 @@
-import React, { useState } from "react";
+import React, { useState , useContext} from "react";
 import { useNavigate } from "react-router-dom";
 import assets from "../assets/assets";
+import { AuthContext } from "../../context/AuthContext";
 
 function ProfilePage() {
 
-
+  const {authUser, updateProfile} = useContext(AuthContext);
   const [selectedImg, setSelectedImg] = useState(null);
   const navigate = useNavigate();
-  const [name, setName] = useState("Martin Johnson");
-  const [bio, setBio] = useState("Hi there! I am a software engineer with a passion for building web applications.");
+  const [name, setName] = useState(authUser?.fullName || "Unknown User");
+  const [bio, setBio] = useState(authUser?.bio || "Hi there! I am a software engineer with a passion for building web applications.");
+
 
   const onSubmitHandler = async(e) => {
     e.preventDefault();
-    navigate('/');
+    if(!selectedImg) {
+      await updateProfile({fullName: name, bio});
+      navigate('/');
+      return;
+    }
+    const reader = new FileReader();
+    reader.readAsDataURL(selectedImg);
+    reader.onloadend = async () => {
+      const base64String = reader.result;
+      await updateProfile({fullName: name, bio, profilePic: base64String});
+      navigate('/');
+    };
   }
 
   return (
@@ -31,7 +44,7 @@ function ProfilePage() {
           <textarea onChange={(e) => setBio(e.target.value)} value={bio} rows={4} required placeholder="Your bio..." className="p-2 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"></textarea>
           <button type="submit" className="bg-gradient-to-r from-purple-400 to-violet-600 text-white p-2 rounded-full text-lg cursor-pointer">Save</button>
         </form>
-        <img src={assets.logo_icon} alt="" className='max-w-44 aspect-square rounded-full mx-10 max-sm:mt-10' />
+        <img src={authUser?.profilePic || assets.logo_icon} alt="" className={`max-w-44 aspect-square rounded-full mx-10 max-sm:mt-10 ${selectedImg && 'rounded-full'}`} />
       </div>
       
 

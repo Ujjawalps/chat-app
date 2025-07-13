@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
   const [onlineUsers, setOnlineUsers] = useState(null);
   const [socket, setSocket] = useState(null);
 
-  // ✅ Centralized token and header sync
+  // Centralized token and header sync
   const setTokenAndHeader = (newToken) => {
     setToken(newToken);
     if (newToken) {
@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ check if the user is authenticated
+  // check if the user is authenticated
   const checkAuth = async () => {
     if (!token) {
       setAuthUser(null);
@@ -35,26 +35,26 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const { data } = await axios.get('/api/auth/check');
-      console.log("✅ Auth check success:", data); // Optional log
+      console.log("Auth check success:", data); // Optional log
       if (data.success) {
         setAuthUser(data.user);
         connectSocket(data.user);
       }
     } catch (error) {
-      console.log("❌ Auth check failed:", error.response?.data || error.message);
+      console.log("Auth check failed:", error.response?.data || error.message);
       setAuthUser(null);
       setTokenAndHeader(null); // Clears localStorage and axios
       toast.error('Please log in again');
     }
   };
 
-  // ✅ login function
+  // login function
   const login = async (state, credentials) => {
     try {
       const { data } = await axios.post(`/api/auth/${state}`, credentials);
       if (data.success) {
         setAuthUser(data.user);
-        setTokenAndHeader(data.token); // 🔥 use new utility
+        setTokenAndHeader(data.token); // use new utility
         connectSocket(data.user);
         toast.success(data.message);
         return true;
@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ logout function
+  // logout function
   const logout = async () => {
     setTokenAndHeader(null);
     setAuthUser(null);
@@ -77,10 +77,10 @@ export const AuthProvider = ({ children }) => {
     socket?.disconnect();
   };
 
-  // ✅ update user profile
+  // update user profile
   const updateProfile = async (userData) => {
     try {
-      const { data } = await axios.put('/api/auth/update', userData);
+      const { data } = await axios.put('/api/auth/update-profile', userData);
       if (data.success) {
         setAuthUser(data.user);
         toast.success(data.message);
@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ socket connection
+  // socket connection
   const connectSocket = (userData) => {
     if (!userData || socket?.connected) return;
 
@@ -118,7 +118,7 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
-  // ✅ useEffect to check auth when token changes
+  // useEffect to check auth when token changes
   useEffect(() => {
     if (token) {
       checkAuth();
