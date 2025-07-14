@@ -65,26 +65,38 @@ export const ChatProvider = ({ children }) => {
 
     // subscibe to messages for selected user
     const subscribeToMessages = (userId) => {
-    if (!socket || !userId) return;
+  if (!socket || !userId) return;
 
-    socket.on("newMessage", (newMessage) => {
+  socket.on("newMessage", (newMessage) => {
+    console.log("💬 New message via socket:", newMessage);
+
     const isCurrentChat =
-        selectedUser &&
-        (selectedUser._id === newMessage.senderId || selectedUser._id === newMessage.recieverId);
+      selectedUser &&
+      (selectedUser._id === newMessage.senderId || selectedUser._id === newMessage.recieverId);
 
     if (isCurrentChat) {
-        newMessage.seen = true;
-        setMessages((prev) => [...prev, newMessage]);
-        axios.put(`/api/messages/mark/${newMessage._id}`);
-    } else {
-        setUnseenMessages((prev) => ({
-        ...prev,
-        [newMessage.senderId]: prev[newMessage.senderId] ? prev[newMessage.senderId] + 1 : 1,
-        }));
-    }
-    });
+      newMessage.seen = true;
+      setMessages((prev) => [...prev, newMessage]);
 
-    };
+      // ✅ Safe PUT request with ID check
+      if (newMessage._id) {
+        console.log("Sending PUT for message ID:", newMessage._id);
+        axios.put(`/api/messages/mark/${newMessage._id}`)
+          .then(() => console.log("✅ Message marked as seen:", newMessage._id))
+          .catch((err) => console.error("❌ Failed to mark seen:", err));
+      } else {
+        console.warn("⚠️ newMessage._id is missing, skipping PUT");
+      }
+    } else {
+      setUnseenMessages((prev) => ({
+        ...prev,
+        [newMessage.senderId]: prev[newMessage.senderId]
+          ? prev[newMessage.senderId] + 1
+          : 1,
+      }));
+    }
+  });
+};
 
 
     // unsubscribe from messages
