@@ -44,6 +44,7 @@ export const getMessages = async (req, res) => {
       ],
     });
 
+    // Uncomment to mark all unseen messages as seen when fetching
     // await Message.updateMany(
     //   { senderId: selectedUserId, recieverId: myId, seen: false },
     //   { seen: true }
@@ -77,7 +78,7 @@ export const markMessagesAsSeen = async (req, res) => {
   }
 };
 
-// 🔹 SEND MESSAGE (TEXT OR IMAGE)
+// 🔹 SEND A NEW MESSAGE
 export const sendMessage = async (req, res) => {
   try {
     const { text, image } = req.body;
@@ -86,7 +87,6 @@ export const sendMessage = async (req, res) => {
 
     let imageUrl;
 
-    // ✅ Handle image upload to Cloudinary if image exists
     if (image) {
       const uploadResponse = await cloudinary.uploader.upload(image);
       imageUrl = uploadResponse.secure_url;
@@ -97,18 +97,12 @@ export const sendMessage = async (req, res) => {
       image: imageUrl,
       senderId,
       recieverId,
+      seen: false,
     });
 
-    // ✅ Emit to both recipient and sender via socket
     const recipientSocketId = userSocketMap[recieverId];
-    const senderSocketId = userSocketMap[senderId];
-
     if (recipientSocketId) {
       io.to(recipientSocketId).emit("newMessage", newMessage);
-    }
-
-    if (senderSocketId) {
-      io.to(senderSocketId).emit("newMessage", newMessage);
     }
 
     res.json({ success: true, message: newMessage });
