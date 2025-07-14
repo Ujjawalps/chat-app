@@ -9,6 +9,7 @@ export const signup = async (req, res) => {
     if (!fullName || !email || !password || !bio) {
       return res.status(400).json({ success: false, message: 'All fields are required' });
     }
+
     const user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({ success: false, message: 'User already exists' });
@@ -36,7 +37,6 @@ export const signup = async (req, res) => {
 
     res.json({ success: true, userData, token, message: 'User created successfully' });
   } catch (error) {
-    console.error('Signup error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
@@ -44,6 +44,7 @@ export const signup = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ success: false, message: 'Invalid credentials' });
@@ -66,7 +67,6 @@ export const login = async (req, res) => {
 
     res.json({ success: true, userData, token, message: 'Login successful' });
   } catch (error) {
-    console.error('Login error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
@@ -77,6 +77,7 @@ export const isAuthenticated = async (req, res) => {
     if (!user) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
+
     const userData = {
       _id: user._id,
       fullName: user.fullName,
@@ -84,9 +85,9 @@ export const isAuthenticated = async (req, res) => {
       bio: user.bio,
       profilePic: user.profilePic,
     };
-    res.json({ success: true, user: userData }); // Match AuthContext.jsx
+
+    res.json({ success: true, user: userData });
   } catch (error) {
-    console.error('Check auth error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
@@ -95,6 +96,7 @@ export const updateProfile = async (req, res) => {
   try {
     const { fullName, profilePic, bio } = req.body;
     const userId = req.user._id;
+
     let updatedData;
 
     if (!profilePic) {
@@ -118,7 +120,6 @@ export const updateProfile = async (req, res) => {
 
     res.json({ success: true, user: userData });
   } catch (error) {
-    console.error('Update profile error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };

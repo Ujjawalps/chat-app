@@ -1,9 +1,6 @@
-import axios from "axios";
-import { createContext, useContext } from "react";
-import React, { useState } from "react";
-import { AuthContext } from "./AuthContext";
+import { createContext, useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useEffect } from "react";
+import { AuthContext } from "./AuthContext";
 
 export const ChatContext = createContext();
 
@@ -13,7 +10,6 @@ export const ChatProvider = ({ children }) => {
   const [messages, setMessages] = useState([]);
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [onlineUsers, setOnlineUsers] = useState([]);
   const [unseenMessages, setUnseenMessages] = useState({});
 
   const getUsers = async () => {
@@ -22,12 +18,9 @@ export const ChatProvider = ({ children }) => {
       if (data.success) {
         setUsers(data.users);
         setUnseenMessages(data.unseenMessages || {});
-        console.log("Users fetched successfully:", data.users);
-      } else {
-        console.error("Failed to fetch users:", data.message);
       }
     } catch (error) {
-      console.error("Error fetching users:", error);
+      toast.error("Failed to load users");
     }
   };
 
@@ -36,45 +29,45 @@ export const ChatProvider = ({ children }) => {
       const { data } = await axios.get(`/api/messages/${userId}`);
       if (data.success) {
         setMessages(data.messages);
-        console.log("Messages fetched successfully:", data.messages);
-      } else {
-        console.error("Failed to fetch messages:", data.message);
       }
     } catch (error) {
-      toast.error(error.message || "Failed to fetch messages");
+      toast.error("Failed to fetch messages");
     }
   };
 
   const sendMessage = async (messageData) => {
+    if (!selectedUser?._id) {
+      toast.error("No user selected");
+      return;
+    }
+
+    const tempId = Date.now().toString();
+    const newMessage = {
+      text: messageData.text,
+      image: messageData.image,
+      senderId: authUser._id,
+      recieverId: selectedUser._id,
+      seen: false,
+      _id: tempId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, newMessage]);
+
     try {
-      if (!selectedUser?._id) {
-        toast.error("No user selected");
-        return;
-      }
-      const newMessage = {
-        text: messageData.text,
-        image: messageData.image,
-        senderId: authUser._id,
-        recieverId: selectedUser._id,
-        seen: false,
-        _id: Date.now().toString(), // Temporary ID for optimistic update
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, newMessage]); // Optimistic update
       const { data } = await axios.post(`/api/messages/send/${selectedUser._id}`, messageData);
-      if (!data.success) {
-        setMessages((prev) => prev.filter((msg) => msg._id !== newMessage._id)); // Rollback on failure
-        toast.error(data.message || "Failed to send message");
-      } else {
-        // Replace temporary ID with server-generated ID when confirmed
+      if (data.success) {
         setMessages((prev) =>
-          prev.map((msg) => (msg._id === newMessage._id ? data.message : msg))
+          prev.map((msg) => (msg._id === tempId ? data.message : msg))
         );
+      } else {
+        setMessages((prev) => prev.filter((msg) => msg._id !== tempId));
+        toast.error("Failed to send message");
       }
     } catch (error) {
-      setMessages((prev) => prev.filter((msg) => msg._id !== newMessage._id)); // Rollback on error
-      toast.error(error.message || "Failed to send message");
+      setMessages((prev) => prev.filter((msg) => msg._id !== tempId));
+      toast.error("Failed to send message");
     }
   };
 
@@ -82,8 +75,6 @@ export const ChatProvider = ({ children }) => {
     if (!socket || !userId) return;
 
     socket.on("newMessage", (newMessage) => {
-      console.log("💬 New message via socket:", newMessage);
-
       const isCurrentChat =
         selectedUser &&
         (selectedUser._id === newMessage.senderId || selectedUser._id === newMessage.recieverId);
@@ -95,23 +86,15 @@ export const ChatProvider = ({ children }) => {
           setMessages((prev) => [...prev, newMessage]);
 
           if (newMessage._id) {
-            console.log("Sending PUT for message ID:", newMessage._id);
-            axios
-              .put(`/api/messages/mark/${newMessage._id}`)
-              .then(() => console.log("✅ Message marked as seen:", newMessage._id))
-              .catch((err) => console.error("❌ Failed to mark seen:", err));
-          } else {
-            console.warn("⚠️ newMessage._id is missing, skipping PUT");
+            axios.put(`/api/messages/mark/${newMessage._id}`).catch(() => {});
           }
         } else {
-          setMessages((prev) => [...prev, newMessage]); // Add sender's message
+          setMessages((prev) => [...prev, newMessage]);
         }
       } else {
         setUnseenMessages((prev) => ({
           ...prev,
-          [newMessage.senderId]: prev[newMessage.senderId]
-            ? prev[newMessage.senderId] + 1
-            : 1,
+          [newMessage.senderId]: (prev[newMessage.senderId] || 0) + 1,
         }));
       }
     });
@@ -126,9 +109,7 @@ export const ChatProvider = ({ children }) => {
     if (selectedUser?._id) {
       subscribeToMessages(selectedUser._id);
     }
-    return () => {
-      unsubscribeFromMessages();
-    };
+    return unsubscribeFromMessages;
   }, [socket, selectedUser]);
 
   const value = {

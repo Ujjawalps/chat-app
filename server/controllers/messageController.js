@@ -3,7 +3,7 @@ import User from "../models/user.js";
 import cloudinary from "../lib/cloudinary.js";
 import { userSocketMap, io } from "../server.js";
 
-// 🔹 GET ALL USERS EXCEPT SELF + UNSEEN MESSAGE COUNT
+// Get all users except the logged-in user + unseen message count
 export const getUsersForSidebar = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -26,12 +26,11 @@ export const getUsersForSidebar = async (req, res) => {
 
     res.status(200).json({ success: true, users: filteredUsers, unseenMessagesCount });
   } catch (error) {
-    console.error("🚨 Error fetching users for sidebar:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// 🔹 FETCH CHAT MESSAGES BETWEEN LOGGED-IN USER AND SELECTED USER
+// Get all messages between two users
 export const getMessages = async (req, res) => {
   try {
     const { id: selectedUserId } = req.params;
@@ -44,41 +43,29 @@ export const getMessages = async (req, res) => {
       ],
     });
 
-    // Uncomment to mark all unseen messages as seen when fetching
-    // await Message.updateMany(
-    //   { senderId: selectedUserId, recieverId: myId, seen: false },
-    //   { seen: true }
-    // );
-
     res.json({ success: true, messages });
   } catch (error) {
-    console.error("🚨 Error fetching messages:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// 🔹 MARK INDIVIDUAL MESSAGE AS SEEN
+// Mark a single message as seen
 export const markMessagesAsSeen = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("🧠 markMessagesAsSeen called with ID:", id);
-
     const updated = await Message.findByIdAndUpdate(id, { seen: true });
 
     if (!updated) {
-      console.warn("❌ Message not found:", id);
       return res.status(404).json({ success: false, message: "Message not found" });
     }
 
-    console.log("✅ Message marked as seen:", updated._id);
     res.json({ success: true });
   } catch (error) {
-    console.error("🔥 Error marking messages as seen:", error.message);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// 🔹 SEND A NEW MESSAGE
+// Send message to selected user
 export const sendMessage = async (req, res) => {
   try {
     const { text, image } = req.body;
@@ -107,7 +94,6 @@ export const sendMessage = async (req, res) => {
 
     res.json({ success: true, message: newMessage });
   } catch (error) {
-    console.error("🔥 Error sending message:", error.message);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
