@@ -85,7 +85,7 @@ export const sendMessage = async (req, res) => {
     if(recipientSocketId){
       io.to(recipientSocketId).emit("newMessage", newMessage);
     }
-    res.json({ success: true, newMessage });
+    res.json({ success: true, message: newMessage });
   } catch (error) {
     console.error("Error sending message:", error);
     res.status(500).json({ success: false, message: "Server error" });
