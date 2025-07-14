@@ -14,6 +14,15 @@ export const AuthProvider = ({ children }) => {
   const [onlineUsers, setOnlineUsers] = useState(null);
   const [socket, setSocket] = useState(null);
 
+  // ✅ On first load, ensure axios has token
+  useEffect(() => {
+    const localToken = localStorage.getItem('token');
+    if (localToken) {
+      axios.defaults.headers.common['token'] = localToken;
+      setToken(localToken); // ensure state sync
+    }
+  }, []);
+
   // Centralized token and header sync
   const setTokenAndHeader = (newToken) => {
     setToken(newToken);
@@ -35,7 +44,7 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const { data } = await axios.get('/api/auth/check');
-      console.log("Auth check success:", data); // Optional log
+      console.log("Auth check success:", data);
       if (data.success) {
         setAuthUser(data.user);
         connectSocket(data.user);
@@ -43,7 +52,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.log("Auth check failed:", error.response?.data || error.message);
       setAuthUser(null);
-      setTokenAndHeader(null); // Clears localStorage and axios
+      setTokenAndHeader(null);
       toast.error('Please log in again');
     }
   };
@@ -54,7 +63,7 @@ export const AuthProvider = ({ children }) => {
       const { data } = await axios.post(`/api/auth/${state}`, credentials);
       if (data.success) {
         setAuthUser(data.user);
-        setTokenAndHeader(data.token); // use new utility
+        setTokenAndHeader(data.token);
         connectSocket(data.user);
         toast.success(data.message);
         return true;
@@ -118,7 +127,7 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
-  // useEffect to check auth when token changes
+  // ✅ Auto-check auth when token is set
   useEffect(() => {
     if (token) {
       checkAuth();
