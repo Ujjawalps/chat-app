@@ -7,17 +7,20 @@ import './index.css';
 
 import { AuthProvider } from '../context/AuthContext.jsx';
 import { ChatProvider } from '../context/ChatContext.jsx';
+import { OtpProvider } from '../context/OtpContext.jsx';
 
 const root = createRoot(document.getElementById('root'));
 
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <ChatProvider>
-          <App />
-        </ChatProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <OtpProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <ChatProvider>
+            <App />
+          </ChatProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </OtpProvider>
   </React.StrictMode>
 );
