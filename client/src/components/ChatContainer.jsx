@@ -1,4 +1,3 @@
-// same imports
 import React, { useRef, useEffect, useState, useContext } from 'react';
 import assets from '../assets/assets';
 import { formatMessageTime } from '../lib/utils';
@@ -58,33 +57,56 @@ const ChatContainer = () => {
 
       {/* Chat Area */}
       <div className='flex flex-col p-4 pb-6 h-[calc(100%-120px)] overflow-y-scroll'>
-        {messages.map((msg, index) => (
-          <div key={index} className={`flex items-end gap-2 justify-end ${msg.senderId !== authUser._id && 'flex-row-reverse'}`}>
-            {msg.image ? (
-              <img src={msg.image} alt="Image" className='max-w-[230px] border border-gray-700 rounded-lg overflow-hidden mb-8' />
-            ) : (
-              <div className='relative'>
-                <p className={`p-2 max-w-[200px] md:text-sm font-light rounded-lg mb-8 break-all bg-violet-500/30 text-white ${
-                  msg.senderId === authUser._id ? 'rounded-br-none' : 'rounded-bl-none'}`}>
-                  {msg.text}
-                </p>
-                {msg.senderId === authUser._id && index === messages.length - 1 && (
-                  <span className='absolute bottom-2 right-2 text-[10px] text-green-400'>
-                    {msg.seen ? '👁️' : '🕓'}
-                  </span>
+        {messages.map((msg, index) => {
+          const isFirstUnseen =
+            !msg.seen &&
+            msg.recieverId === authUser._id &&
+            (index === 0 || messages[index - 1].seen || messages[index - 1].recieverId !== authUser._id);
+
+          return (
+            <React.Fragment key={msg._id || index}>
+              {isFirstUnseen && (
+                <div className='text-center my-3 text-gray-400 text-xs'>
+                  --- New Messages ---
+                </div>
+              )}
+
+              <div className={`flex items-end gap-2 justify-end ${msg.senderId !== authUser._id && 'flex-row-reverse'}`}>
+                {msg.image ? (
+                  <img src={msg.image} alt="Image" className='max-w-[230px] border border-gray-700 rounded-lg overflow-hidden mb-8' />
+                ) : (
+                  <div className='relative'>
+                    <p className={`p-2 max-w-[200px] md:text-sm font-light rounded-lg mb-8 break-all bg-violet-500/30 text-white ${
+                      msg.senderId === authUser._id ? 'rounded-br-none' : 'rounded-bl-none'}`}>
+                      {msg.text}
+                    </p>
+                    {msg.senderId === authUser._id && index === messages.length - 1 && (
+                      <span className='absolute bottom-2 right-2 text-[10px] text-green-400'>
+                        {msg.seen ? '👁️' : '🕓'}
+                      </span>
+                    )}
+                  </div>
                 )}
+                <div className='text-center text-xs'>
+                  <img
+                    src={
+                      msg.senderId === authUser._id
+                        ? authUser?.profilePic || assets.avatar_icon
+                        : selectedUser?.profilePic || assets.avatar_icon
+                    }
+                    alt=""
+                    className='w-7 rounded-full'
+                  />
+                  <p className='text-gray-500'>{formatMessageTime(msg.createdAt)}</p>
+                </div>
               </div>
-            )}
-            <div className='text-center text-xs'>
-              <img src={msg.senderId === authUser._id ? authUser?.profilePic || assets.avatar_icon : selectedUser?.profilePic || assets.avatar_icon} alt="" className='w-7 rounded-full' />
-              <p className='text-gray-500'>{formatMessageTime(msg.createdAt)}</p>
-            </div>
-          </div>
-        ))}
+            </React.Fragment>
+          );
+        })}
         <div ref={scrollEnd}></div>
       </div>
 
-      {/* bottom Area */}
+      {/* Bottom Input Area */}
       <div className='absolute bottom-0 left-0 right-0 p-3 flex items-center gap-3'>
         <div className='flex-1 flex items-center bg-gray-100/12 px-3 rounded-full'>
           <input

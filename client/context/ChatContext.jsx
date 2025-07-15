@@ -135,6 +135,13 @@ export const ChatProvider = ({ children }) => {
     return unsubscribeFromMessages;
   }, [socket, selectedUser]);
 
+  useEffect(() => {
+    if (!authUser) {
+      setSelectedUser(null); // 🔄 reset selected chat when user logs out
+    }
+  }, [authUser]);
+
+
   const value = {
     messages,
     users,
