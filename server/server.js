@@ -6,6 +6,7 @@ import { connectDB } from './lib/db.js';
 import UserRouter from './routes/userRouter.js';
 import messageRouter from './routes/messageRoutes.js';
 import { Server } from 'socket.io';
+import otpRoutes from './routes/otpRoutes.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -42,6 +43,7 @@ app.use(express.json({ limit: '4mb' }));
 app.use('/api/status', (req, res) => res.send('Server is running'));
 app.use('/api/auth', UserRouter);
 app.use('/api/messages', messageRouter);
+app.use('/api/otp', otpRoutes);
 
 app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: 'Server error' });
