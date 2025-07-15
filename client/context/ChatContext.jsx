@@ -15,25 +15,47 @@ export const ChatProvider = ({ children }) => {
   const getUsers = async () => {
     try {
       const { data } = await axios.get("/api/messages/users");
+
+      console.log("🔄 getUsers() Response:", data);
+
       if (data.success) {
         setUsers(data.users);
-        setUnseenMessages(data.unseenMessages || {});
+
+        const unseenMap = {};
+
+        data.users.forEach((user) => {
+          unseenMap[user._id] = data.unseenMessagesCount?.[user._id] || 0;
+        });
+
+        console.log("📦 unseenMessages map:", unseenMap);
+        setUnseenMessages(unseenMap);
       }
     } catch (error) {
-      toast.error("Failed to load users");
+      console.error("❌ Failed to load users", error);
     }
   };
+
 
   const getMessages = async (userId) => {
     try {
       const { data } = await axios.get(`/api/messages/${userId}`);
       if (data.success) {
         setMessages(data.messages);
+
+        // ✅ Mark all unseen messages from this user as seen
+        await axios.put(`/api/messages/mark-all/${userId}`);
+
+        // ✅ Update state so sidebar resets unseen badge to 0
+        setUnseenMessages((prev) => ({
+          ...prev,
+          [userId]: 0,
+        }));
       }
     } catch (error) {
       toast.error("Failed to fetch messages");
     }
   };
+
 
   const sendMessage = async (messageData) => {
     if (!selectedUser?._id) {
@@ -91,7 +113,8 @@ export const ChatProvider = ({ children }) => {
         } else {
           setMessages((prev) => [...prev, newMessage]);
         }
-      } else {
+      }else if (newMessage.recieverId === authUser._id) {
+        // This means it's an unseen incoming message to me
         setUnseenMessages((prev) => ({
           ...prev,
           [newMessage.senderId]: (prev[newMessage.senderId] || 0) + 1,

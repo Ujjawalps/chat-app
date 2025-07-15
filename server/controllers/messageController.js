@@ -7,6 +7,7 @@ import { userSocketMap, io } from "../server.js";
 export const getUsersForSidebar = async (req, res) => {
   try {
     const userId = req.user.id;
+
     const filteredUsers = await User.find({ _id: { $ne: userId } }).select("-password");
 
     const unseenMessagesCount = {};
@@ -17,6 +18,7 @@ export const getUsersForSidebar = async (req, res) => {
         recieverId: userId,
         seen: false,
       });
+
       if (messages.length > 0) {
         unseenMessagesCount[user._id] = messages.length;
       }
@@ -24,11 +26,16 @@ export const getUsersForSidebar = async (req, res) => {
 
     await Promise.all(promises);
 
+    console.log("📨 Unseen message counts:", unseenMessagesCount); // ✅ Log on backend
+
     res.status(200).json({ success: true, users: filteredUsers, unseenMessagesCount });
   } catch (error) {
+    console.error("❌ Sidebar Fetch Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+
 
 // Get all messages between two users
 export const getMessages = async (req, res) => {
@@ -64,6 +71,29 @@ export const markMessagesAsSeen = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+// Mark all messages from a specific sender as seen
+export const markAllMessagesAsSeen = async (req, res) => {
+  try {
+    const fromUserId = req.params.id;
+    const toUserId = req.user._id;
+
+    await Message.updateMany(
+      {
+        senderId: fromUserId,
+        recieverId: toUserId,
+        seen: false,
+      },
+      { $set: { seen: true } }
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("❌ Error marking all messages as seen:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 
 // Send message to selected user
 export const sendMessage = async (req, res) => {
