@@ -10,20 +10,12 @@ axios.defaults.baseURL = backendUrl;
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem('token') || null);
+  const [token, setToken] = useState(() => localStorage.getItem('token') || null);
   const [authUser, setAuthUser] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(null);
   const [socket, setSocket] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
 
-
-  useEffect(() => {
-    const localToken = localStorage.getItem('token');
-    if (localToken) {
-      axios.defaults.headers.common['token'] = localToken;
-      setToken(localToken);
-    }
-  }, []);
 
   const setTokenAndHeader = (newToken) => {
     setToken(newToken);
@@ -136,8 +128,10 @@ export const AuthProvider = ({ children }) => {
     } else {
       console.log("🟥 Token not found in useEffect.");
       setAuthUser(null);
+      setLoadingAuth(false);  // ✅ ADD THIS LINE
     }
   }, [token]);
+
 
 
   const value = {
