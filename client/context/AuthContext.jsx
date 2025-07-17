@@ -20,13 +20,14 @@ export const AuthProvider = ({ children }) => {
   const setTokenAndHeader = (newToken) => {
     setToken(newToken);
     if (newToken) {
-      axios.defaults.headers.common['token'] = newToken;
+      axios.defaults.headers.common['token'] = newToken; // ✅ ADD THIS
       localStorage.setItem('token', newToken);
     } else {
       delete axios.defaults.headers.common['token'];
       localStorage.removeItem('token');
     }
   };
+
   const checkAuth = async () => {
     console.log("🟨 checkAuth started");
     setLoadingAuth(true); // Start loading
@@ -122,15 +123,24 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    console.log("🟨 useEffect [token] fired, token:", token);
+    const localToken = localStorage.getItem("token");
+
+    if (localToken) {
+      console.log("🟦 Token found in localStorage on mount:", localToken);
+      setToken(localToken); // ✅ This will also trigger `checkAuth`
+      axios.defaults.headers.common['token'] = localToken;
+    } else {
+      console.log("🟥 No token found in localStorage. Logging out.");
+      setAuthUser(null);
+      setLoadingAuth(false);
+    }
+  }, []);
+  useEffect(() => {
     if (token) {
       checkAuth();
-    } else {
-      console.log("🟥 Token not found in useEffect.");
-      setAuthUser(null);
-      setLoadingAuth(false);  // ✅ ADD THIS LINE
     }
   }, [token]);
+
 
 
 
