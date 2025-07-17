@@ -7,11 +7,14 @@ import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import bgImage from './assets/bgImage.svg';
 
+import Loader from './components/Loader';
+
 import { AuthContext } from '../context/AuthContext';
 
 const App = () => {
-  const { authUser } = useContext(AuthContext);
+  const { authUser, loadingAuth } = useContext(AuthContext);
 
+  if (loadingAuth) return <Loader />;
   return (
     <div
       className="min-h-screen bg-cover bg-center text-white"

@@ -1,13 +1,15 @@
 import { createContext, useContext, useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useRef } from 'react';
 
 export const OtpContext = createContext();
 
 export const OtpProvider = ({ children }) => {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
   const [timer, setTimer] = useState(0);
+  const timerId = useRef(null);
 
   const sendOtp = async (email) => {
     if (!email) {
@@ -15,7 +17,7 @@ export const OtpProvider = ({ children }) => {
       return;
     }
 
-    setLoading(true);
+    setOtpLoading(true);
     try {
       const { data } = await axios.post('/api/otp/send', { email });
 
@@ -28,7 +30,7 @@ export const OtpProvider = ({ children }) => {
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to send OTP');
     } finally {
-      setLoading(false);
+      setOtpLoading(false);
     }
   };
 
@@ -38,7 +40,7 @@ export const OtpProvider = ({ children }) => {
       return false;
     }
 
-    setLoading(true);
+    setOtpLoading(true);
     try {
       const { data } = await axios.post('/api/otp/verify', { email, otp });
 
@@ -54,16 +56,18 @@ export const OtpProvider = ({ children }) => {
       toast.error(error.response?.data?.message || 'OTP verification failed');
       return false;
     } finally {
-      setLoading(false);
+      setOtpLoading(false);
     }
   };
 
   const startTimer = () => {
     setTimer(59);
-    const interval = setInterval(() => {
+    if (timerId.current) clearInterval(timerId.current);
+    timerId.current = setInterval(() => {
       setTimer((prev) => {
         if (prev === 1) {
-          clearInterval(interval);
+          clearInterval(timerId.current);
+          timerId.current = null;
           return 0;
         }
         return prev - 1;
@@ -77,7 +81,7 @@ export const OtpProvider = ({ children }) => {
   };
 
   return (
-    <OtpContext.Provider value={{ sendOtp, verifyOtp, isEmailVerified, timer, loading, resetOtpState }}>
+    <OtpContext.Provider value={{ sendOtp, verifyOtp, isEmailVerified, timer, otpLoading, resetOtpState }}>
       {children}
     </OtpContext.Provider>
   );

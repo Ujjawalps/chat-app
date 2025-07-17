@@ -13,6 +13,8 @@ export const AuthProvider = ({ children }) => {
   const [authUser, setAuthUser] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(null);
   const [socket, setSocket] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
 
   useEffect(() => {
     const localToken = localStorage.getItem('token');
@@ -34,22 +36,32 @@ export const AuthProvider = ({ children }) => {
   };
 
   const checkAuth = async () => {
+    setLoadingAuth(true); // Start loading
+
     if (!token) {
       setAuthUser(null);
+      setLoadingAuth(false);
       return;
     }
+
     try {
       const { data } = await axios.get('/api/auth/check');
       if (data.success) {
         setAuthUser(data.user);
         connectSocket(data.user);
+      } else {
+        setAuthUser(null);
+        setTokenAndHeader(null);
       }
     } catch (error) {
       setAuthUser(null);
       setTokenAndHeader(null);
       toast.error('Please log in again');
+    } finally {
+      setLoadingAuth(false); // Done loading
     }
   };
+
 
   const login = async (state, credentials) => {
     try {
@@ -116,15 +128,17 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   const value = {
-    axios,
-    token,
-    authUser,
-    onlineUsers,
-    socket,
-    login,
-    logout,
-    updateProfile,
-  };
+  axios,
+  token,
+  authUser,
+  onlineUsers,
+  socket,
+  login,
+  logout,
+  updateProfile,
+  loadingAuth,
+};
+
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

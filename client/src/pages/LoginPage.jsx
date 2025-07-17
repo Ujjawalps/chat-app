@@ -4,6 +4,8 @@ import { AuthContext } from '../../context/AuthContext';
 import { OtpContext } from '../../context/OtpContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import Loader from '../components/Loader';
+
 
 function LoginPage() {
   const [currState, setCurrentState] = useState('sign up');
@@ -14,10 +16,15 @@ function LoginPage() {
   const [otp, setOtp] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isDataSubmitted, setIsDataSubmitted] = useState(false);
+  const [loginInProgress, setLoginInProgress] = useState(false);
 
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
-  const { sendOtp, verifyOtp, isEmailVerified, timer, loading, resetOtpState } = useContext(OtpContext);
+  
+  const { loading: otpLoading } = useContext(OtpContext);
+  const { loadingAuth } = useContext(AuthContext);
+
+  const { sendOtp, verifyOtp, isEmailVerified, timer, resetOtpState } = useContext(OtpContext);
 
   // Reset on mode switch
   useEffect(() => {
@@ -41,7 +48,7 @@ function LoginPage() {
     await verifyOtp(email, otp);
   };
 
-  const onSubmitHandler = async (e) => {
+ const onSubmitHandler = async (e) => {
     e.preventDefault();
 
     if (currState === 'sign up') {
@@ -52,13 +59,16 @@ function LoginPage() {
       }
     }
 
+    setLoginInProgress(true);
     const success = await login(currState === 'sign up' ? 'signup' : 'login', {
       fullName, email, password, bio,
     });
+    setLoginInProgress(false);
 
     if (success) navigate('/');
   };
 
+  if (otpLoading || loadingAuth) return <Loader />;
   return (
     <div className='min-h-screen flex items-center justify-center gap-8 sm:justify-evenly max-sm:flex-col backdrop-blur-2xl bg-cover bg-center'>
       <img src={assets.logo_big} alt="img" className='w-[min(300vm,250px)]' />
@@ -108,7 +118,7 @@ function LoginPage() {
                   <button
                     type="button"
                     onClick={handleSendOtp}
-                    disabled={loading || timer > 0}
+                    disabled={otpLoading || timer > 0}
                     className='py-1 px-3 bg-blue-500 text-white rounded-md text-sm'
                   >
                     {timer > 0 ? `Resend OTP in ${timer}s` : 'Send OTP'}
@@ -163,10 +173,11 @@ function LoginPage() {
 
         <button
           type='submit'
-          className='py-3 bg-gradient-to-r from-purple-400 to-violet-600 text-white font-semibold rounded-md'
+          className='py-3 bg-gradient-to-r from-purple-400 to-violet-600 text-white font-semibold rounded-md flex items-center justify-center'
         >
-          {currState === 'sign up' ? 'Create Account' : 'Login Now'}
+          {loginInProgress ? <span className='loader-small'></span> : (currState === 'sign up' ? 'Create Account' : 'Login Now')}
         </button>
+
 
         {currState === 'sign up' && (
           <label className='flex items-center gap-2 text-sm text-gray-500 cursor-pointer'>
