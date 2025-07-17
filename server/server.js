@@ -14,9 +14,8 @@ const server = http.createServer(app);
 // ✅ Allow both localhost and Vercel frontend
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://quick-chat-rust.vercel.app'
+  process.env.CLIENT_URL
 ];
-
 // ✅ Apply CORS for Express
 app.use(cors({
   origin: function (origin, callback) {
