@@ -3,6 +3,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
+
 const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 axios.defaults.baseURL = backendUrl;
 
@@ -34,33 +35,42 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('token');
     }
   };
-
   const checkAuth = async () => {
+    console.log("🟨 checkAuth started");
     setLoadingAuth(true); // Start loading
 
     if (!token) {
+      console.log("🟥 No token found. Skipping auth check.");
       setAuthUser(null);
       setLoadingAuth(false);
       return;
     }
 
     try {
+      console.log("🟦 Sending request to /api/auth/check with token:", token);
       const { data } = await axios.get('/api/auth/check');
+
+      console.log("🟩 Response from /api/auth/check:", data);
+
       if (data.success) {
         setAuthUser(data.user);
         connectSocket(data.user);
       } else {
+        console.log("🟥 Auth check failed:", data.message);
         setAuthUser(null);
         setTokenAndHeader(null);
       }
     } catch (error) {
+      console.log("🟥 Error during auth check:", error);
       setAuthUser(null);
       setTokenAndHeader(null);
       toast.error('Please log in again');
     } finally {
-      setLoadingAuth(false); // Done loading
+      setLoadingAuth(false);
+      console.log("✅ checkAuth finished");
     }
   };
+
 
 
   const login = async (state, credentials) => {
@@ -120,12 +130,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    console.log("🟨 useEffect [token] fired, token:", token);
     if (token) {
       checkAuth();
     } else {
+      console.log("🟥 Token not found in useEffect.");
       setAuthUser(null);
     }
   }, [token]);
+
 
   const value = {
   axios,
