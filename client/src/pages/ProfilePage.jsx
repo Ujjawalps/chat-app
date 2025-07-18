@@ -16,10 +16,11 @@ function ProfilePage() {
     const onSubmitHandler = async (e) => {
         e.preventDefault();
         setLoading(true);
+        
 
         try {
             if (!selectedImg) {
-                await updateProfile({ fullName: name, bio });
+                await updateProfile({ fullName: name, bio, profilePic: selectedImg });
                 navigate('/');
                 return;
             }

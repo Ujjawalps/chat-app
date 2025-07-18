@@ -92,34 +92,53 @@ export const isAuthenticated = async (req, res) => {
   }
 };
 
+
+import streamifier from "streamifier"; // npm install streamifier
+
 export const updateProfile = async (req, res) => {
   try {
-    const { fullName, profilePic, bio } = req.body;
+    const { fullName, bio } = req.body;
     const userId = req.user._id;
 
-    let updatedData;
+    let profilePicUrl;
 
-    if (!profilePic) {
-      updatedData = await User.findByIdAndUpdate(userId, { fullName, bio }, { new: true });
-    } else {
-      const upload = await cloudinary.uploader.upload(profilePic);
-      updatedData = await User.findByIdAndUpdate(
-        userId,
-        { fullName, bio, profilePic: upload.secure_url },
-        { new: true }
-      );
+    if (req.file) {
+      const streamUpload = (req) => {
+        return new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream((error, result) => {
+            if (result) resolve(result);
+            else reject(error);
+          });
+
+          streamifier.createReadStream(req.file.buffer).pipe(stream);
+        });
+      };
+
+      const result = await streamUpload(req);
+      profilePicUrl = result.secure_url;
     }
 
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        fullName,
+        bio,
+        ...(profilePicUrl && { profilePic: profilePicUrl }),
+      },
+      { new: true }
+    );
+
     const userData = {
-      _id: updatedData._id,
-      fullName: updatedData.fullName,
-      email: updatedData.email,
-      bio: updatedData.bio,
-      profilePic: updatedData.profilePic,
+      _id: updatedUser._id,
+      fullName: updatedUser.fullName,
+      email: updatedUser.email,
+      bio: updatedUser.bio,
+      profilePic: updatedUser.profilePic,
     };
 
-    res.json({ success: true, user: userData });
+    res.json({ success: true, user: userData, message: "Profile updated successfully" });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
+    console.error("Error updating profile:", error);
+    res.status(500).json({ success: false, message: "Server error during profile update" });
   }
 };

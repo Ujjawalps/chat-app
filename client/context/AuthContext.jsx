@@ -95,7 +95,19 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (userData) => {
     try {
-      const { data } = await axios.put('/api/auth/update-profile', userData);
+      const formData = new FormData();
+      formData.append("fullName", userData.fullName);
+      formData.append("bio", userData.bio);
+      if (userData.profilePic) {
+        formData.append("image", userData.profilePic);
+      }
+
+      const { data } = await axios.put('/api/auth/update-profile', formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
       if (data.success) {
         setAuthUser(data.user);
         toast.success(data.message);
@@ -103,7 +115,7 @@ export const AuthProvider = ({ children }) => {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || "Failed to update profile");
     }
   };
 
